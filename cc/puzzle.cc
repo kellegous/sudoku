@@ -34,6 +34,19 @@ std::vector<std::unordered_set<size_t>> get_peers() {
     return peers;
 }
 
+size_t least_ambiguious_cell_index(const std::vector<Cell>& cells) {
+    size_t ix = 0;
+    int min = 10;
+    for (size_t i = 0, n = cells.size(); i < n; ++i) {
+        auto c = cells[i].count();
+        if (c > 1 && c < min) {
+            min = c;
+            ix = i;
+        }
+    }
+    return ix;
+}
+
 }  // namespace
 
 Result<bool, std::string> Puzzle::assign(int ix, int value) {
@@ -75,7 +88,7 @@ Result<Puzzle, std::string> Puzzle::parse(const std::string& s) {
         } else if (c > '0' && c <= '9') {
             auto res = p.assign(i, c - '0');
             if (!res.is_ok()) {
-                return Err(res.take_err_value());
+                return Err(res.take_err());
             }
         } else {
             return Err(Format("Invalid character '%c' at position %d", c, i));
@@ -119,4 +132,33 @@ std::string Puzzle::debug() const {
     }
 
     return res;
+}
+
+bool Puzzle::is_solved() const {
+    for (auto c : m_cells) {
+        if (c.count() != 1) {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::optional<Puzzle> Puzzle::solve() const {
+    if (is_solved()) {
+        return *this;
+    }
+
+    auto ix = least_ambiguious_cell_index(m_cells);
+    for (auto v : m_cells[ix]) {
+        auto p = *this;
+        auto res = p.assign(ix, v);
+        if (res.is_ok()) {
+            auto soln = p.solve();
+            if (soln) {
+                return soln;
+            }
+        }
+    }
+
+    return std::nullopt;
 }

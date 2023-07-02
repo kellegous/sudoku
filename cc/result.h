@@ -1,46 +1,68 @@
 #ifndef __RESULT_H__
 #define __RESULT_H__
 
+// h/t https://yegor.pomortsev.com/post/result-type/
+
 #include <variant>
 
 template <typename T>
 class Ok {
    public:
-    explicit constexpr Ok(T value) : value(std::move(value)) {}
+    explicit constexpr Ok(T value) : m_value(std::move(value)) {}
 
-    constexpr T&& take_value() { return std::move(value); }
+    constexpr T&& take_value() {
+        return std::move(m_value);
+    }
 
-    T value;
+   private:
+    T m_value;
 };
 
 template <typename T>
 class Err {
    public:
-    explicit constexpr Err(T value) : value(std::move(value)) {}
+    explicit constexpr Err(T value) : m_value(std::move(value)) {}
 
-    constexpr T&& take_value() { return std::move(value); }
+    constexpr T&& take_value() {
+        return std::move(m_value);
+    }
 
-    T value;
+   private:
+    T m_value;
 };
 
-template <typename OkT, typename ErrT>
+template <typename V, typename E>
 class Result {
    public:
-    using VariantT = std::variant<Ok<OkT>, Err<ErrT>>;
+    constexpr Result(Ok<V> value) : m_variant(std::move(value)) {}
+    constexpr Result(Err<E> value) : m_variant(std::move(value)) {}
 
-    constexpr Result(Ok<OkT> value) : variant(std::move(value)) {}
-    constexpr Result(Err<ErrT> value) : variant(std::move(value)) {}
+    constexpr bool is_ok() const {
+        return std::holds_alternative<Ok<V>>(m_variant);
+    }
 
-    constexpr bool is_ok() const { return std::holds_alternative<Ok<OkT>>(variant); }
-    constexpr bool is_err() const { return std::holds_alternative<Err<ErrT>>(variant); }
+    constexpr bool is_err() const {
+        return std::holds_alternative<Err<E>>(m_variant);
+    }
 
-    constexpr OkT ok_value() const { return std::get<Ok<OkT>>(variant).value; }
-    constexpr ErrT err_value() const { return std::get<Err<ErrT>>(variant).value; }
+    constexpr V ok() const {
+        return std::get<Ok<V>>(m_variant).value;
+    }
 
-    constexpr OkT&& take_ok_value() { return std::get<Ok<OkT>>(variant).take_value(); }
-    constexpr ErrT&& take_err_value() { return std::get<Err<ErrT>>(variant).take_value(); }
+    constexpr E err() const {
+        return std::get<Err<E>>(m_variant).value;
+    }
 
-    VariantT variant;
+    constexpr V&& take_ok() {
+        return std::get<Ok<V>>(m_variant).take_value();
+    }
+
+    constexpr E&& take_err() {
+        return std::get<Err<E>>(m_variant).take_value();
+    }
+
+   private:
+    std::variant<Ok<V>, Err<E>> m_variant;
 };
 
 #endif  // __RESULT_H__
