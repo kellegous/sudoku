@@ -36,7 +36,7 @@ std::vector<std::unordered_set<size_t>> get_peers() {
 
 }  // namespace
 
-Status Puzzle::assign(int ix, int value) {
+Result<bool, std::string> Puzzle::assign(int ix, int value) {
     static auto peers = get_peers();
 
     m_cells[ix] = m_cells[ix].assign(value);
@@ -48,40 +48,41 @@ Status Puzzle::assign(int ix, int value) {
         }
         m_cells[peer] = n;
         if (n.is_empty()) {
-            return Status::Error("conflicting assignment");
+            return Err(std::string("conflicting assignment"));
         }
         auto soln = n.solution();
         if (soln) {
-            auto did = assign(peer, *soln);
-            if (!did.ok()) {
-                return did;
+            auto res = assign(peer, *soln);
+            if (!res.is_ok()) {
+                return res;
             }
         }
     }
 
-    return Status::Ok();
+    return Ok(true);
 }
 
-Status Puzzle::parse(const std::string& s) {
+Result<Puzzle, std::string> Puzzle::parse(const std::string& s) {
     if (s.size() != 81) {
-        return Status::Error("Puzzle must be 81 characters long");
+        return Err(std::string("Puzzle must be 81 characters long"));
     }
 
+    Puzzle p;
     for (auto i = 0; i < 81; ++i) {
         auto c = s[i];
         if (c == '.' || c == '0') {
             continue;
         } else if (c > '0' && c <= '9') {
-            auto did = assign(i, c - '0');
-            if (!did.ok()) {
-                return did;
+            auto res = p.assign(i, c - '0');
+            if (!res.is_ok()) {
+                return Err(res.take_err_value());
             }
         } else {
-            return Status::Errorf("Invalid character '%c' at position %d", c, i);
+            return Err(Format("Invalid character '%c' at position %d", c, i));
         }
     }
 
-    return Status::Ok();
+    return Ok(p);
 }
 
 std::string Puzzle::to_string() const {

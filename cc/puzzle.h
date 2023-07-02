@@ -4,20 +4,20 @@
 #include <vector>
 
 #include "cell.h"
-#include "status.h"
+#include "result.h"
 
 class Puzzle {
    public:
     Puzzle() : m_cells(81, Cell::with_all_values()) {}
 
-    Status parse(const std::string& s);
+    static Result<Puzzle, std::string> parse(const std::string& s);
 
     std::string to_string() const;
 
     std::string debug() const;
 
    private:
-    Status assign(int index, int value);
+    Result<bool, std::string> assign(int index, int value);
 
     std::vector<Cell> m_cells;
 };

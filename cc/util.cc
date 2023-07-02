@@ -1,6 +1,7 @@
 #include "util.h"
 
 #include <cstdio>
+#include <iostream>
 
 std::string Format(const char* format, ...) {
     std::string result(256, 0);
