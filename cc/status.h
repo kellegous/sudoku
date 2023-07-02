@@ -21,7 +21,7 @@ class Status {
 
     static Status Errorf(const char* format, ...);
 
-    bool is_ok() const;
+    bool ok() const;
 
     const char* message() const;
 

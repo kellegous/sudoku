@@ -18,7 +18,7 @@ Status Status::Errorf(const char* format, ...) {
     return Status(msg);
 }
 
-bool Status::is_ok() const {
+bool Status::ok() const {
     return m_message == "";
 }
 

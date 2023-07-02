@@ -3,6 +3,8 @@
 
 #include <cstdint>
 #include <iterator>
+#include <optional>
+#include <string>
 
 class Cell {
    public:
@@ -17,6 +19,14 @@ class Cell {
         return *this;
     }
 
+    friend bool operator==(const Cell& a, const Cell& b) {
+        return a.m_values == b.m_values;
+    }
+
+    friend bool operator!=(const Cell& a, const Cell& b) {
+        return a.m_values != b.m_values;
+    }
+
     static Cell with_all_values();
 
     Cell add(int value) const;
@@ -24,6 +34,16 @@ class Cell {
     Cell remove(int value) const;
 
     Cell assign(int value) const;
+
+    int count() const;
+
+    std::optional<int> solution() const;
+
+    bool is_empty() const {
+        return m_values == 0;
+    }
+
+    std::string to_string() const;
 
     struct Iterator {
         using iterator_category = std::input_iterator_tag;
