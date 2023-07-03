@@ -1,5 +1,6 @@
 #include "puzzle.h"
 
+#include <array>
 #include <iostream>
 #include <unordered_set>
 
@@ -7,32 +8,37 @@
 
 namespace {
 
-size_t quad_of(size_t ix) {
+constexpr size_t quad_of(size_t ix) {
     return (ix % 9) / 3 + 3 * (ix / 27);
 }
 
-size_t col_of(size_t ix) {
+constexpr size_t col_of(size_t ix) {
     return ix % 9;
 }
 
-size_t row_of(size_t ix) {
+constexpr size_t row_of(size_t ix) {
     return ix / 9;
 }
 
-std::vector<std::unordered_set<size_t>> get_peers() {
-    std::vector<std::unordered_set<size_t>> peers(81);
-    for (auto i = 0; i < 81; ++i) {
+constexpr auto get_peers() {
+    std::array<size_t, 81 * 20> peers = {};
+    for (auto i = 0; i < 81; i++) {
         auto row = row_of(i);
         auto col = col_of(i);
         auto quad = quad_of(i);
-        for (auto j = 0; j < 81; ++j) {
-            if (i != j && (row == row_of(j) || col == col_of(j) || quad == quad_of(j))) {
-                peers[i].insert(j);
+        size_t offset = i * 20;
+        for (auto j = 0; j < 81; j++) {
+            if (i == j) {
+                continue;
+            }
+
+            if (row == row_of(j) || col == col_of(j) || quad == quad_of(j)) {
+                peers[offset++] = j;
             }
         }
     }
     return peers;
-}
+};
 
 size_t least_ambiguious_cell_index(const std::vector<Cell>& cells) {
     size_t ix = 0;
@@ -50,10 +56,13 @@ size_t least_ambiguious_cell_index(const std::vector<Cell>& cells) {
 }  // namespace
 
 Result<bool, std::string> Puzzle::assign(int ix, int value) {
-    static auto peers = get_peers();
+    // peers computed during compile time.
+    static constexpr std::array<size_t, 81 * 20> peers = get_peers();
 
     m_cells[ix] = m_cells[ix].assign(value);
-    for (auto peer : peers[ix]) {
+    size_t off = ix * 20;
+    for (size_t i = 0; i < 20; ++i) {
+        auto peer = peers[off + i];
         auto o = m_cells[peer];
         auto n = o.remove(value);
         if (o == n) {
