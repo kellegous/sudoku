@@ -1,33 +1,44 @@
-use lazy_static::lazy_static;
 use std::{
     error::Error,
     io::{self, BufRead},
 };
 
-lazy_static! {
-    static ref PEERS: Vec<Vec<usize>> = (0..81)
-        .map(|x| {
-            let row = row_of(x);
-            let col = col_of(x);
-            let quad = quad_of(x);
-            (0..81)
-                .filter(|&y| x != y && (row_of(y) == row || col_of(y) == col || quad_of(y) == quad))
-                .collect::<Vec<usize>>()
-        })
-        .collect();
-}
-
-fn quad_of(ix: usize) -> usize {
+const fn quad_of(ix: usize) -> usize {
     (ix % 9) / 3 + 3 * (ix / 27)
 }
 
-fn col_of(ix: usize) -> usize {
+const fn col_of(ix: usize) -> usize {
     ix % 9
 }
 
-fn row_of(ix: usize) -> usize {
+const fn row_of(ix: usize) -> usize {
     ix / 9
 }
+
+const fn get_peers() -> [usize; 81 * 20] {
+    // for loops are not allowed in const fns
+    let mut peers = [0; 81 * 20];
+    let mut i = 0;
+    while i < 81 {
+        let row = row_of(i);
+        let col = col_of(i);
+        let quad = quad_of(i);
+        let mut offset = i * 20;
+        let mut j = 0;
+        while j < 81 {
+            if i != j && (row_of(j) == row || col_of(j) == col || quad_of(j) == quad) {
+                peers[offset] = j;
+                offset += 1;
+            }
+            j += 1;
+        }
+        i += 1;
+    }
+    peers
+}
+
+// peers are computed at compile time
+const PEERS: [usize; 81 * 20] = get_peers();
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 struct Cell {
@@ -101,7 +112,9 @@ struct Puzzle {
 impl Puzzle {
     fn assign(&mut self, ix: usize, v: i32) -> Result<(), Box<dyn Error>> {
         self.cells[ix] = self.cells[ix].assign(v);
-        for &peer in PEERS[ix].iter() {
+        let offset = ix * 20;
+        for i in 0..20 {
+            let peer = PEERS[offset + i];
             let old = self.cells[peer];
             let new = old.remove(v);
             if old == new {
