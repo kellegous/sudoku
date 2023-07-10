@@ -20,7 +20,7 @@ constexpr size_t row_of(size_t ix) {
     return ix / 9;
 }
 
-constexpr auto get_peers() {
+consteval auto get_peers() {
     std::array<size_t, 81 * 20> peers = {};
     for (auto i = 0; i < 81; i++) {
         auto row = row_of(i);
