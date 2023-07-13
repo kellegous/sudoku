@@ -62,7 +62,7 @@ struct Cell: Sequence, Equatable, CustomStringConvertible {
     }
 
     var count: Int {
-        values.nonzeroBitCount // dang, this uses popcnt instruction!
+        values.nonzeroBitCount
     }
     
     var isEmpty: Bool {
