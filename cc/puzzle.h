@@ -27,7 +27,7 @@ class Puzzle {
     std::optional<Puzzle> solve() const;
 
    private:
-    Result<bool, std::string> assign(int index, int value);
+    bool assign(int index, int value);
 
     std::vector<Cell> m_cells;
 };

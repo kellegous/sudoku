@@ -55,7 +55,7 @@ size_t least_ambiguious_cell_index(const std::vector<Cell>& cells) {
 
 }  // namespace
 
-Result<bool, std::string> Puzzle::assign(int ix, int value) {
+bool Puzzle::assign(int ix, int value) {
     // peers computed during compile time.
     static constexpr std::array<size_t, 81 * 20> peers = get_peers();
 
@@ -70,18 +70,17 @@ Result<bool, std::string> Puzzle::assign(int ix, int value) {
         }
         m_cells[peer] = n;
         if (n.is_empty()) {
-            return Err(std::string("conflicting assignment"));
+            return false;
         }
         auto soln = n.solution();
         if (soln) {
-            auto res = assign(peer, *soln);
-            if (!res.is_ok()) {
-                return res;
+            if (!assign(peer, *soln)) {
+                return false;
             }
         }
     }
 
-    return Ok(true);
+    return true;
 }
 
 Result<Puzzle, std::string> Puzzle::parse(const std::string& s) {
@@ -95,9 +94,8 @@ Result<Puzzle, std::string> Puzzle::parse(const std::string& s) {
         if (c == '.' || c == '0') {
             continue;
         } else if (c > '0' && c <= '9') {
-            auto res = p.assign(i, c - '0');
-            if (!res.is_ok()) {
-                return Err(res.take_err());
+            if (!p.assign(i, c - '0')) {
+                return Err(std::string("conflicting assignment"));
             }
         } else {
             return Err(Format("Invalid character '%c' at position %d", c, i));
@@ -160,8 +158,7 @@ std::optional<Puzzle> Puzzle::solve() const {
     auto ix = least_ambiguious_cell_index(m_cells);
     for (auto v : m_cells[ix]) {
         auto p = *this;
-        auto res = p.assign(ix, v);
-        if (res.is_ok()) {
+        if (p.assign(ix, v)) {
             auto soln = p.solve();
             if (soln) {
                 return soln;
