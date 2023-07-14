@@ -22,18 +22,18 @@ constexpr size_t row_of(size_t ix) {
 
 consteval auto get_peers() {
     std::array<size_t, 81 * 20> peers = {};
+    auto iter = peers.begin();
     for (auto i = 0; i < 81; i++) {
         auto row = row_of(i);
         auto col = col_of(i);
         auto quad = quad_of(i);
-        size_t offset = i * 20;
         for (auto j = 0; j < 81; j++) {
             if (i == j) {
                 continue;
             }
 
             if (row == row_of(j) || col == col_of(j) || quad == quad_of(j)) {
-                peers[offset++] = j;
+                *iter++ = j;
             }
         }
     }
